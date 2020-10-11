@@ -13,4 +13,4 @@ class file_reader:
     def read_files(self):
         for filename in self.data_files_list:
             file = self.FILE_PATH + filename
-            self.data_frames_dict.update({filename: pd.read_excel(file)})
+            self.data_frames_dict.update({filename: pd.read_excel(file, na_filter=False)})
