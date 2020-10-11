@@ -6,7 +6,7 @@ import core.data_processor.file_reader as FR
 def main():
     file_path = os.getcwd() + '/data_base/'
     file_worker = FR.file_reader(file_path)
-    file_worker .read_files()
+    file_worker.read_files()
     data_frame = file_worker.data_frames_dict
     new_data_frames_list = []
 
@@ -15,10 +15,30 @@ def main():
                          ['сельскохозяйственная культура', 'spr_cul.xlsx', 'name_kul', 'code_kul'],
                          ['фаза роста', 'dan_cul.xlsx', 'name_faz', 'code_kul']]
 
-    i = 0
-    if menu(stages_and_frames, data_frame, i, new_data_frames_list) != 0:
-        for element in new_data_frames_list:
-            print(element)
+    if menu(stages_and_frames, data_frame, 0, new_data_frames_list) != 0:
+        print('Рассчет поливной нормы')
+
+        temp_data_frame = data_frame.get('dan_soil.xlsx')
+        parameters = [new_data_frames_list[0]['code_poch'], new_data_frames_list[1]['code_meh']]
+        columns1 = ['ob_massa', 'code_poch', 'code_meh']
+        columns2 = ['wl_min', 'code_poch', 'code_meh']
+
+        Max = new_data_frames_list[3]['max_norma']
+        H = new_data_frames_list[3]['h_slo']
+        Porog_NW = new_data_frames_list[3]['porog_nw']
+        RO = average(temp_data_frame, parameters, columns1)
+        NW = average(temp_data_frame, parameters, columns2)
+        P = 0.01 * (NW - Porog_NW)
+        m = H * RO * NW * (1 - 0.01 * Porog_NW)
+
+        print('MAX: ', float(Max))
+        print('H: ', float(H))
+        print('Porog_Nw: ', float(Porog_NW))
+        print('RO: ', float(RO))
+        print('NW: ', float(NW))
+        print('P: ', float(P))
+        print('m: ', float(m))
+
     else:
         return 0
 
@@ -29,14 +49,16 @@ def menu(stages, data_frame, i, new_data_frames_list):
     elif i >= len(stages):
         return new_data_frames_list
     else:
-        print('Выберите ', stages[i][0])
+        print('Выберите: ', stages[i][0])
         menu_item = data_frame.get(stages[i][1])
         needed_column = stages[i][2]
         if not new_data_frames_list:
             print(menu_item[needed_column])
+
+
         else:
             flag_column = stages[i][3]
-            if flag_column in new_data_frames_list[i-1].columns:
+            if flag_column in new_data_frames_list[i - 1].columns:
                 flag_variables_list = list(re.findall(r'\d+', str(new_data_frames_list[i - 1][flag_column])))
                 if flag_variables_list:
                     menu_item = menu_item.loc[menu_item[flag_column].isin(flag_variables_list)]
@@ -67,6 +89,17 @@ def menu(stages, data_frame, i, new_data_frames_list):
         else:
             print('Ошибка: такого варианта нет \n\n\n\n')
             menu(stages, data_frame, i, new_data_frames_list)
+
+
+def average(data_frame, parameters_list, columns):
+    result = 0
+    var = data_frame.loc[data_frame[columns[1]].isin(parameters_list[0]) &
+                         data_frame[columns[2]].isin(parameters_list[1])]
+
+    for element in var[columns[0]]:
+       result += element
+
+    return result/len(var)
 
 
 if __name__ == '__main__':
