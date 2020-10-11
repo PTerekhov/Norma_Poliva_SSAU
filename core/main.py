@@ -15,39 +15,13 @@ def main():
                          ['сельскохозяйственная культура', 'spr_cul.xlsx', 'name_kul', 'code_kul'],
                          ['фаза роста', 'dan_cul.xlsx', 'name_faz', 'code_kul']]
 
-    if menu(stages_and_frames, data_frame, 0, new_data_frames_list) != 0:
-        print('Рассчет поливной нормы')
-
-        temp_data_frame = data_frame.get('dan_soil.xlsx')
-        parameters = [new_data_frames_list[0]['code_poch'], new_data_frames_list[1]['code_meh']]
-        columns1 = ['ob_massa', 'code_poch', 'code_meh']
-        columns2 = ['wl_min', 'code_poch', 'code_meh']
-
-        Max = new_data_frames_list[3]['max_norma']
-        H = new_data_frames_list[3]['h_slo']
-        Porog_NW = new_data_frames_list[3]['porog_nw']
-        RO = average(temp_data_frame, parameters, columns1)
-        NW = average(temp_data_frame, parameters, columns2)
-        P = 0.01 * (NW - Porog_NW)
-        m = H * RO * NW * (1 - 0.01 * Porog_NW)
-
-        print('MAX: ', float(Max))
-        print('H: ', float(H))
-        print('Porog_Nw: ', float(Porog_NW))
-        print('RO: ', float(RO))
-        print('NW: ', float(NW))
-        print('P: ', float(P))
-        print('m: ', float(m))
-
-    else:
-        return 0
-
+    menu(stages_and_frames, data_frame, 0, new_data_frames_list)
 
 def menu(stages, data_frame, i, new_data_frames_list):
     if i < 0:
         return 0
     elif i >= len(stages):
-        return new_data_frames_list
+        return calculate(data_frame,new_data_frames_list)
     else:
         print('Выберите: ', stages[i][0])
         menu_item = data_frame.get(stages[i][1])
@@ -60,6 +34,7 @@ def menu(stages, data_frame, i, new_data_frames_list):
             flag_column = stages[i][3]
             if flag_column in new_data_frames_list[i - 1].columns:
                 flag_variables_list = list(re.findall(r'\d+', str(new_data_frames_list[i - 1][flag_column])))
+                flag_variables_list.remove(flag_variables_list[0])
                 if flag_variables_list:
                     menu_item = menu_item.loc[menu_item[flag_column].isin(flag_variables_list)]
             print(menu_item[needed_column])
@@ -90,6 +65,32 @@ def menu(stages, data_frame, i, new_data_frames_list):
             print('Ошибка: такого варианта нет \n\n\n\n')
             menu(stages, data_frame, i, new_data_frames_list)
 
+
+def calculate(data_frame1, data_frame2):
+    print('Рассчет поливной нормы')
+
+    temp_data_frame = data_frame1.get('dan_soil.xlsx')
+    parameters = [data_frame2[0]['code_poch'], data_frame2[1]['code_meh']]
+    columns1 = ['ob_massa', 'code_poch', 'code_meh']
+    columns2 = ['wl_min', 'code_poch', 'code_meh']
+
+    Max = data_frame2[3]['max_norma']
+    H = data_frame2[3]['h_slo']
+    Porog_NW = data_frame2[3]['porog_nw']
+    RO = average(temp_data_frame, parameters, columns1)
+    NW = average(temp_data_frame, parameters, columns2)
+    P = 0.01 * (NW - Porog_NW)
+    m = H * RO * NW * (1 - 0.01 * Porog_NW)
+
+    print('MAX: ', float(Max))
+    print('H: ', float(H))
+    print('Porog_Nw: ', float(Porog_NW))
+    print('RO: ', float(RO))
+    print('NW: ', float(NW))
+    print('P: ', float(P))
+    print('m: ', float(m))
+
+    return 0
 
 def average(data_frame, parameters_list, columns):
     result = 0
